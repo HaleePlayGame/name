@@ -31,6 +31,19 @@ tiktokLiveConnection.on('gift', data => {
     allGifts.push(latestGift);
 });
 
+// เมื่อมีคนกดหัวใจ
+tiktokLiveConnection.on('like', data => {
+    console.log(`${data.uniqueId} กดหัวใจ x${data.likeCount}`);
+    
+    latestGift = {
+        type: "like",
+        count: data.likeCount,
+        sender: data.uniqueId,
+        timestamp: Date.now()
+    };
+    allGifts.push(latestGift);
+});
+
 // ===== API Routes =====
 
 // 1. ทดสอบเซิร์ฟเวอร์
