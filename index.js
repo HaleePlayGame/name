@@ -1,12 +1,11 @@
 import { WebcastPushConnection } from 'tiktok-live-connector';
 import express from 'express';
-import fetch from 'node-fetch';
 
 const app = express();
 app.use(express.json());
 
-// Roblox Webhook URL (ฝั่ง Roblox จะต้องทำ Endpoint รอรับข้อมูลตรงนี้)
-const ROBLOX_WEBHOOK = "https://YOUR_ROBLOX_API_URL";
+let latestGift = {};
+let allGifts = [];
 
 // TikTok username
 const TIKTOK_USERNAME = "haleeplaygame";
@@ -23,25 +22,40 @@ tiktokLiveConnection.connect().then(state => {
 // เมื่อมีคนส่งของขวัญ
 tiktokLiveConnection.on('gift', data => {
     console.log(`${data.uniqueId} ส่งของขวัญ: ${data.giftName}`);
-    
-    // ส่งข้อมูลไป Roblox
-    fetch(ROBLOX_WEBHOOK, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            gift: data.giftName,
-            sender: data.uniqueId
-        })
-    }).then(() => console.log("✅ ส่งข้อมูลไป Roblox แล้ว"))
-      .catch(err => console.error("❌ ส่งข้อมูลไป Roblox ล้มเหลว", err));
+
+    latestGift = {
+        gift: data.giftName,
+        sender: data.uniqueId,
+        timestamp: Date.now()
+    };
+    allGifts.push(latestGift);
 });
 
-// Route ทดสอบ
+// ===== API Routes =====
+
+// 1. ทดสอบเซิร์ฟเวอร์
 app.get("/", (req, res) => {
-    res.send("TikTok → Roblox Server ทำงานอยู่แล้ว!");
+    res.json({ status: "OK", message: "TikTok → Roblox API ทำงานปกติ" });
 });
 
-// รันเซิร์ฟเวอร์
+// 2. เอาของขวัญล่าสุด
+app.get("/latestgift", (req, res) => {
+    res.json(latestGift);
+});
+
+// 3. เอาของขวัญทั้งหมด
+app.get("/allgifts", (req, res) => {
+    res.json(allGifts);
+});
+
+// 4. ล้างข้อมูล
+app.post("/clear", (req, res) => {
+    latestGift = {};
+    allGifts = [];
+    res.json({ status: "cleared" });
+});
+
+// เริ่มเซิร์ฟเวอร์
 app.listen(process.env.PORT || 3000, () => {
     console.log("🚀 Server started");
 });
